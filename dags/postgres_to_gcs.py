@@ -21,7 +21,7 @@ FILE_PREFIX="dvdrental/{{ ds }}/"
 
 with models.DAG(
     dag_id='postgres_to_gcs',
-    start_date=datetime(2021, 1, 1),
+    start_date=datetime(2022, 1, 1),
     schedule_interval="0 1 * * *",
     catchup=False,
     tags=['example'],
