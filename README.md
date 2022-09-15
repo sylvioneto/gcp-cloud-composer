@@ -2,20 +2,20 @@
 
 ## Description
 
-This example demonstrates how to use Cloud Composer to:
-- Restore a Postgres backup
-- Extract data from Postgres to Cloud Storage
-- Load data from Cloud Storage to BigQuery
-- Transform data on BigQuery (to-do)
+This example demonstrates how to use Cloud Composer DAGS to:
+- [Restore a Postgres backup](./dags/postgres_restore.py)
+- [Extract data from Postgres to Cloud Storage (Data Lake)](./dags/postgres_to_datalake.py)
+- [Load data from Cloud Storage (Data Lake) to BigQuery (Data Warehouse)](./dags/datalake_to_dw.py)
+- [Transform data on BigQuery](./dags/bigquery_transform.py)
 
 Resources created:
 - VPC with firewall rules
-- Cloud Composer
+- Cloud Composer v2
 - Cloud SQL for Postgres
 - Cloud Storage Buckets
+- BigQuery datasets and tables
 
 Check more operators available in [Airflow Google Operators doc](https://airflow.apache.org/docs/apache-airflow-providers-google/stable/operators/index.html).
-
 
 ## Deploy
 
