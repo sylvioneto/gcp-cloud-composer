@@ -75,5 +75,19 @@ with models.DAG(
         write_disposition='WRITE_TRUNCATE',
     )
 
+    bq_load_inventory = GCSToBigQueryOperator(
+        task_id='bq_load_inventory',
+        bucket=GCS_DATA_LAKE_BUCKET,
+        source_objects=[FILE_PATH+"/inventory.csv"],
+        skip_leading_rows=1,
+        destination_project_dataset_table="{}.{}".format(DATASET_NAME, "inventory"),
+        schema_fields=[
+            {'name': 'inventory_id', 'type': 'INTEGER', 'mode': 'NULLABLE'},
+            {'name': 'film_id', 'type': 'INTEGER', 'mode': 'NULLABLE'},
+            {'name': 'store_id', 'type': 'INTEGER', 'mode': 'NULLABLE'},
+        ],
+        write_disposition='WRITE_TRUNCATE',
+    )
+
 # Task hierarchy
-trigger_datalake_dag >> create_dataset >> [bq_load_customer, bq_load_rental, bq_load_film]
+trigger_datalake_dag >> create_dataset >> [bq_load_customer, bq_load_rental, bq_load_film, bq_load_inventory]

@@ -59,3 +59,14 @@ with models.DAG(
         use_server_side_cursor=True,
     )
 
+    task_inventory = PostgresToGCSOperator(
+        task_id="get_inventory",
+        postgres_conn_id=CONN_ID,
+        sql="select inventory_id, film_id, store_id from inventory;",
+        bucket=GCS_DATA_LAKE_BUCKET,
+        filename=FILE_PREFIX+"inventory.csv",
+        export_format='csv',
+        gzip=False,
+        use_server_side_cursor=True,
+    )
+
