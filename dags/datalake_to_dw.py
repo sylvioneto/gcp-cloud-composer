@@ -1,10 +1,10 @@
 """
-Example Airflow DAG for Google BigQuery service testing dataset operations.
+This example shows how to trigger a Datalake dag, and then load the data into BigQuery.
 """
 import os
 from datetime import datetime
 from airflow import models
-from airflow.providers.google.cloud.transfers.postgres_to_gcs import PostgresToGCSOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
 from airflow.providers.google.cloud.operators.bigquery import BigQueryCreateEmptyDatasetOperator
 
@@ -16,29 +16,25 @@ FILE_PATH="dvdrental/{{ ds }}"
 
 
 with models.DAG(
-    dag_id='postgres_to_bigquery',
-    schedule_interval=None,
+    dag_id='datalake_to_dw',
+    schedule_interval="@once",
     start_date=datetime(2022, 1, 1),
     catchup=False,
     tags=["example", "bigquery"],
 ) as dag:
 
-    create_dataset = BigQueryCreateEmptyDatasetOperator(task_id="create_dataset", dataset_id=DATASET_NAME)
-
-    # Extract and load customer data
-    get_customer = PostgresToGCSOperator(
-        task_id="get_customer",
-        postgres_conn_id=CONN_ID,
-        sql="select customer_id, email, store_id from customer;",
-        bucket=GCS_DATA_LAKE_BUCKET,
-        filename=FILE_PATH+"/customer.csv",
-        export_format='csv',
-        gzip=False,
-        use_server_side_cursor=True,
+    trigger_datalake_dag = TriggerDagRunOperator(
+        task_id="trigger_datalake_dag",
+        trigger_dag_id="postgres_to_datalake",
+        wait_for_completion=True,
+        poke_interval=10, #seconds
+        execution_date="{{ execution_date }}"
     )
 
-    load_customer = GCSToBigQueryOperator(
-        task_id='load_customer',
+    create_dataset = BigQueryCreateEmptyDatasetOperator(task_id="create_dataset", dataset_id=DATASET_NAME)
+
+    bq_load_customer = GCSToBigQueryOperator(
+        task_id='bq_load_customer',
         bucket=GCS_DATA_LAKE_BUCKET,
         source_objects=[FILE_PATH+"/customer.csv"],
         skip_leading_rows=1,
@@ -51,20 +47,8 @@ with models.DAG(
         write_disposition='WRITE_TRUNCATE',
     )
 
-    # Extract and load rental data
-    get_rental = PostgresToGCSOperator(
-        task_id="get_rental",
-        postgres_conn_id=CONN_ID,
-        sql="select customer_id, inventory_id, rental_date from rental;",
-        bucket=GCS_DATA_LAKE_BUCKET,
-        filename=FILE_PATH+"/rental.csv",
-        export_format='csv',
-        gzip=False,
-        use_server_side_cursor=True,
-    )
-
-    load_rental = GCSToBigQueryOperator(
-        task_id='load_rental',
+    bq_load_rental = GCSToBigQueryOperator(
+        task_id='bq_load_rental',
         bucket=GCS_DATA_LAKE_BUCKET,
         source_objects=[FILE_PATH+"/rental.csv"],
         skip_leading_rows=1,
@@ -77,20 +61,8 @@ with models.DAG(
         write_disposition='WRITE_TRUNCATE',
     )
 
-    # Extract and load film data
-    get_film = PostgresToGCSOperator(
-        task_id="get_film",
-        postgres_conn_id=CONN_ID,
-        sql="select film_id, title, description from film;",
-        bucket=GCS_DATA_LAKE_BUCKET,
-        filename=FILE_PATH+"/film.csv",
-        export_format='csv',
-        gzip=False,
-        use_server_side_cursor=True,
-    )
-
-    load_film = GCSToBigQueryOperator(
-        task_id='load_film',
+    bq_load_film = GCSToBigQueryOperator(
+        task_id='bq_load_film',
         bucket=GCS_DATA_LAKE_BUCKET,
         source_objects=[FILE_PATH+"/film.csv"],
         skip_leading_rows=1,
@@ -103,8 +75,5 @@ with models.DAG(
         write_disposition='WRITE_TRUNCATE',
     )
 
-
-create_dataset >> [ get_customer, get_rental, get_film]
-get_customer >> load_customer
-get_rental >> load_rental
-get_film >> load_film
+# Task hierarchy
+trigger_datalake_dag >> create_dataset >> [bq_load_customer, bq_load_rental, bq_load_film]
