@@ -18,7 +18,7 @@ resource "google_sql_database_instance" "instance" {
     }
   }
 
-  depends_on = [module.vpc]
+  depends_on = [google_service_networking_connection.private_service_connection]
 }
 
 resource "google_sql_database" "dvdrental" {
