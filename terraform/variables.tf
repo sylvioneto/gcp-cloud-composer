@@ -19,7 +19,7 @@ variable "project_id" {
 variable "region" {
   type        = string
   description = "GCP region"
-  default     = "southamerica-east1"
+  default     = "us-central1"
 }
 
 variable "composer_env_name" {
