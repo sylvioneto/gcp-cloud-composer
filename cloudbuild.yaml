@@ -50,7 +50,7 @@ steps:
 options:
   env:
     - TF_VAR_project_id=$PROJECT_ID
-    - REGION=southamerica-east1
+    - REGION=us-central1
 
 tags:
   - terraform

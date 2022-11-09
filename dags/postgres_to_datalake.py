@@ -8,66 +8,39 @@ Requirement: make sure the dag postgres_restore completed successfully at least 
 """
 import os
 from datetime import datetime
+import string
 
 from airflow import models
 from airflow.providers.google.cloud.transfers.postgres_to_gcs import PostgresToGCSOperator
+from airflow.decorators import task
 
 
-CONN_ID="DVDRENTAL_DB"
-GCS_DATA_LAKE_BUCKET=os.environ.get("GCS_DATA_LAKE_BUCKET")
-FILE_PREFIX="dvdrental/{{ ds }}/"
+CONN_ID = "DVDRENTAL_DB"
+GCS_DATA_LAKE_BUCKET = os.environ.get("GCS_DATA_LAKE_BUCKET")
+FILE_PREFIX = "dvdrental/{{ ds }}/"
 
 
 with models.DAG(
     dag_id='postgres_to_datalake',
     start_date=datetime(2022, 1, 1),
-    schedule_interval=None,
-    #schedule_interval="0 1 * * *",
+    schedule_interval="0 1 * * *",
     catchup=False,
-    tags=['example'],
+    tags=['cloudsql', 'postgres', 'gcs'],
 ) as dag:
 
-    task_customer = PostgresToGCSOperator(
-        task_id="get_customer",
-        postgres_conn_id=CONN_ID,
-        sql="select customer_id, email, store_id from customer;",
-        bucket=GCS_DATA_LAKE_BUCKET,
-        filename=FILE_PREFIX+"customer.csv",
-        export_format='csv',
-        gzip=False,
-        use_server_side_cursor=True,
-    )
+    table_list = ["customer", "rental", "film", "inventory"]
 
-    task_rental = PostgresToGCSOperator(
-        task_id="get_rental",
-        postgres_conn_id=CONN_ID,
-        sql="select customer_id, inventory_id, rental_date from rental;",
-        bucket=GCS_DATA_LAKE_BUCKET,
-        filename=FILE_PREFIX+"rental.csv",
-        export_format='csv',
-        gzip=False,
-        use_server_side_cursor=True,
-    )
+    @task
+    def extract_table(table: string):
+        return PostgresToGCSOperator(
+            task_id="extract_table_{}".format(table),
+            postgres_conn_id=CONN_ID,
+            sql="select * from {};".format(table),
+            bucket=GCS_DATA_LAKE_BUCKET,
+            filename=FILE_PREFIX+"{}.csv".format(table),
+            export_format='csv',
+            gzip=False,
+            use_server_side_cursor=True,
+        )
 
-    task_film = PostgresToGCSOperator(
-        task_id="get_film",
-        postgres_conn_id=CONN_ID,
-        sql="select film_id, title, description from film;",
-        bucket=GCS_DATA_LAKE_BUCKET,
-        filename=FILE_PREFIX+"film.csv",
-        export_format='csv',
-        gzip=False,
-        use_server_side_cursor=True,
-    )
-
-    task_inventory = PostgresToGCSOperator(
-        task_id="get_inventory",
-        postgres_conn_id=CONN_ID,
-        sql="select inventory_id, film_id, store_id from inventory;",
-        bucket=GCS_DATA_LAKE_BUCKET,
-        filename=FILE_PREFIX+"inventory.csv",
-        export_format='csv',
-        gzip=False,
-        use_server_side_cursor=True,
-    )
-
+    tasks = extract_table.expand(table=table_list)
