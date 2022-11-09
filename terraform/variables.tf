@@ -1,5 +1,14 @@
 locals {
   airflow_conn_dvdrental = "gcpcloudsql://airflow:${var.airflow_password}@${google_sql_database_instance.instance.private_ip_address}:5432/dvdrental"
+
+  // Datastream us-central1
+  datastream_ips = [
+    "34.72.28.29",
+    "34.67.234.134",
+    "34.67.6.157",
+    "34.72.239.218",
+    "34.71.242.81"
+  ]
 }
 
 variable "project_id" {

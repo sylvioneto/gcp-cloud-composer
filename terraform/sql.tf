@@ -9,12 +9,22 @@ resource "google_sql_database_instance" "instance" {
   deletion_protection = false # not recommended for PROD
 
   settings {
-    tier        = "db-g1-small"
+    tier        = "db-custom-1-3840"
     user_labels = var.resource_labels
 
     ip_configuration {
       ipv4_enabled    = false
       private_network = module.vpc.network_self_link
+
+      dynamic "authorized_networks" {
+        for_each = local.datastream_ips
+        iterator = datastream_ips
+
+        content {
+          name  = "datastream-${datastream_ips.key}"
+          value = datastream_ips.value
+        }
+      }
     }
   }
 
