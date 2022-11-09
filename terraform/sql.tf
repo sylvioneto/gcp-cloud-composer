@@ -13,7 +13,7 @@ resource "google_sql_database_instance" "instance" {
     user_labels = var.resource_labels
 
     ip_configuration {
-      ipv4_enabled    = false
+      ipv4_enabled    = true
       private_network = module.vpc.network_self_link
 
       dynamic "authorized_networks" {
