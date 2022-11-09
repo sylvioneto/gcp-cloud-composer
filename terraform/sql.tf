@@ -1,5 +1,5 @@
 resource "random_id" "db_name_suffix" {
-  byte_length = 4
+  byte_length = 2
 }
 
 resource "google_sql_database_instance" "instance" {
@@ -39,5 +39,11 @@ resource "google_sql_database" "dvdrental" {
 resource "google_sql_user" "airflow" {
   instance = google_sql_database_instance.instance.id
   name     = "airflow"
-  password = var.airflow_password
+  password = var.db_password
+}
+
+resource "google_sql_user" "datastream" {
+  instance = google_sql_database_instance.instance.id
+  name     = "datastream"
+  password = var.db_password
 }

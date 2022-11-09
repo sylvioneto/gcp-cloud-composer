@@ -33,7 +33,7 @@ resource "google_compute_global_address" "service_range" {
   purpose       = "VPC_PEERING"
   address_type  = "INTERNAL"
   address       = "10.200.0.0"
-  prefix_length = 24
+  prefix_length = 16
   network       = module.vpc.network_name
 }
 
@@ -41,4 +41,12 @@ resource "google_service_networking_connection" "private_service_connection" {
   network                 = module.vpc.network_id
   service                 = "servicenetworking.googleapis.com"
   reserved_peering_ranges = [google_compute_global_address.service_range.name]
+}
+
+resource "google_compute_network_peering_routes_config" "peering_routes" {
+  peering = google_service_networking_connection.private_service_connection.peering
+  network = module.vpc.network_id
+
+  import_custom_routes = true
+  export_custom_routes = true
 }
