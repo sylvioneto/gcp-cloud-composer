@@ -12,7 +12,7 @@ import string
 
 from airflow import models
 from airflow.providers.google.cloud.transfers.postgres_to_gcs import PostgresToGCSOperator
-from airflow.decorators import task
+from airflow.operators.dummy import DummyOperator
 
 
 CONN_ID = "DVDRENTAL_DB"
@@ -30,7 +30,6 @@ with models.DAG(
 
     table_list = ["customer", "rental", "film", "inventory"]
 
-    @task
     def extract_table(table: string):
         return PostgresToGCSOperator(
             task_id="extract_table_{}".format(table),
@@ -43,4 +42,9 @@ with models.DAG(
             use_server_side_cursor=True,
         )
 
-    tasks = extract_table.expand(table=table_list)
+    task_root = DummyOperator(
+        task_id='group_tasks',
+        dag=dag)
+
+    for t in table_list:
+        task_root >> extract_table(t)
