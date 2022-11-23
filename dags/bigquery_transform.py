@@ -20,34 +20,35 @@ with models.DAG(
 ) as dag:
 
     CUSTOMER_RENTALS_QUERY = (
-        '''
-        WITH rental_movies AS(
+    '''WITH rental_movies AS(
             SELECT
                 r.customer_id,
                 r.rental_date,
+                r.return_date,
                 f.title
-            FROM `{0}.{1}.rental` r
-            JOIN `{0}.{1}.inventory` i ON (r.inventory_id=i.inventory_id)
-            JOIN `{0}.{1}.film` f ON (i.film_id=f.film_id))
+            FROM `syl-data-analytics.dvdrental.rental` r
+            JOIN `syl-data-analytics.dvdrental.inventory` i ON (r.inventory_id=i.inventory_id)
+            JOIN `syl-data-analytics.dvdrental.film` f ON (i.film_id=f.film_id))
         SELECT
             c.customer_id,
-            c.customer_email,
+            c.email as customer_email,
             ARRAY_AGG(
                 STRUCT(
+                    rm.title as film_title,
                     rm.rental_date,
-                    rm.title as film_title
+                    rm.return_date
                 )
             ) AS rentals
         FROM
-            `{0}.{1}.customer` c
+            `syl-data-analytics.dvdrental.customer` c
         LEFT JOIN
             rental_movies rm
         ON
             (rm.customer_id=c.customer_id)
         GROUP BY
-            c.customer_id,
-            c.customer_email
-        '''.format(PROJECT_ID, DATASET_NAME)
+            1,
+            2
+    '''.format(PROJECT_ID, DATASET_NAME)
     )
 
     create_customer_rentals = BigQueryInsertJobOperator(
