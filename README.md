@@ -69,3 +69,11 @@ gcloud builds submit . --config cloudbuild.yaml
 ```
 gcloud builds submit . --config cloudbuild_destroy.yaml
 ```
+
+## Development
+
+Create a virtual environment and install the requirements
+```
+virtualenv ven
+pip install -r requirements.txt
+```

@@ -17,7 +17,6 @@ from airflow.operators.dummy import DummyOperator
 
 CONN_ID = "DVDRENTAL_DB"
 GCS_DATA_LAKE_BUCKET = os.environ.get("GCS_DATA_LAKE_BUCKET")
-FILE_PREFIX = "dvdrental/{{ ds }}/"
 
 
 with models.DAG(
@@ -31,12 +30,14 @@ with models.DAG(
     table_list = ["customer", "rental", "film", "inventory"]
 
     def extract_table(table: string):
+        object_name = "dvdrental/" + table + ".csv"
+
         return PostgresToGCSOperator(
             task_id="extract_table_{}".format(table),
             postgres_conn_id=CONN_ID,
             sql="select * from {};".format(table),
             bucket=GCS_DATA_LAKE_BUCKET,
-            filename=FILE_PREFIX+"{}.csv".format(table),
+            filename=object_name,
             export_format='csv',
             gzip=False,
             use_server_side_cursor=True,
