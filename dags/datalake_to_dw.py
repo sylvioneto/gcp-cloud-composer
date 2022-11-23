@@ -37,54 +37,22 @@ with models.DAG(
         location="US"
     )
 
-    # example with autodetect schema
-    bq_load_customer = GCSToBigQueryOperator(
-        task_id='bq_load_customer',
-        bucket=GCS_DATA_LAKE_BUCKET,
-        source_objects=[BUCKET_PREFIX+"customer.csv"],
-        skip_leading_rows=1,
-        destination_project_dataset_table="{}.{}".format(
-            DATASET_NAME, "customer"),
-        autodetect=True,
-        write_disposition='WRITE_TRUNCATE',
-    )
+    table_list = ["customer", "rental", "film", "inventory"]
 
-    bq_load_rental = GCSToBigQueryOperator(
-        task_id='bq_load_rental',
-        bucket=GCS_DATA_LAKE_BUCKET,
-        source_objects=[BUCKET_PREFIX+"rental.csv"],
-        skip_leading_rows=1,
-        destination_project_dataset_table="{}.{}".format(DATASET_NAME, "rental"),
-        autodetect=True,
-        write_disposition='WRITE_TRUNCATE',
-    )
+    def load_table(table):
+        object_name = "dvdrental/" + table + "/dt={{ ds }}/records.csv"
 
-    bq_load_film = GCSToBigQueryOperator(
-        task_id='bq_load_film',
-        bucket=GCS_DATA_LAKE_BUCKET,
-        source_objects=[BUCKET_PREFIX+"film.csv"],
-        skip_leading_rows=1,
-        destination_project_dataset_table="{}.{}".format(DATASET_NAME, "film"),
-        autodetect=True,
-        write_disposition='WRITE_TRUNCATE',
-    )
+        return GCSToBigQueryOperator(
+            task_id='bq_load_{}'.format(table),
+            bucket=GCS_DATA_LAKE_BUCKET,
+            source_objects=[object_name],
+            skip_leading_rows=1,
+            destination_project_dataset_table="{}.{}".format(DATASET_NAME, table),
+            autodetect=True,
+            write_disposition='WRITE_TRUNCATE',
+        )
 
-    # example with Schema Fields
-    bq_load_inventory = GCSToBigQueryOperator(
-        task_id='bq_load_inventory',
-        bucket=GCS_DATA_LAKE_BUCKET,
-        source_objects=[BUCKET_PREFIX+"inventory.csv"],
-        skip_leading_rows=1,
-        destination_project_dataset_table="{}.{}".format(
-            DATASET_NAME, "inventory"),
-        schema_fields=[
-            {'name': 'inventory_id', 'type': 'INTEGER', 'mode': 'NULLABLE'},
-            {'name': 'film_id', 'type': 'INTEGER', 'mode': 'NULLABLE'},
-            {'name': 'store_id', 'type': 'INTEGER', 'mode': 'NULLABLE'},
-        ],
-        write_disposition='WRITE_TRUNCATE',
-    )
+    for t in table_list:
+        create_dataset >> load_table(t)
 
-# Task hierarchy
-trigger_datalake_dag >> create_dataset >> [
-    bq_load_customer, bq_load_rental, bq_load_film, bq_load_inventory]
+trigger_datalake_dag >> create_dataset

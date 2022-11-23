@@ -12,7 +12,7 @@ CONN_ID="DVDRENTAL_DB"
 DATASET_NAME = f"dvdrental"
 PROJECT_ID = os.environ.get("GCP_PROJECT")
 GCS_DATA_LAKE_BUCKET = os.environ.get("GCS_DATA_LAKE_BUCKET")
-FILE_PREFIX="dvdrental/"
+FILE_PREFIX="dvdrental/tests/"
 
 
 with models.DAG(
@@ -50,6 +50,5 @@ with models.DAG(
         ],
         write_disposition='WRITE_TRUNCATE',
     )
-
 
 create_dataset >> get_customer >> load_customer

@@ -30,7 +30,7 @@ with models.DAG(
     table_list = ["customer", "rental", "film", "inventory"]
 
     def extract_table(table: string):
-        object_name = "dvdrental/" + table + ".csv"
+        object_name = "dvdrental/" + table + "/dt={{ ds }}/records.csv"
 
         return PostgresToGCSOperator(
             task_id="extract_table_{}".format(table),
