@@ -8,7 +8,7 @@ from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobO
 
 
 PROJECT_ID = os.environ.get("GCP_PROJECT")
-DATASET_NAME = f"dvdrental"
+DATASET_NAME = "dvdrental"
 
 
 with models.DAG(
@@ -50,8 +50,8 @@ with models.DAG(
         '''.format(PROJECT_ID, DATASET_NAME)
     )
 
-    bq_transform_job = BigQueryInsertJobOperator(
-        task_id="bq_transform_job",
+    create_customer_rentals = BigQueryInsertJobOperator(
+        task_id="create_customer_rentals",
         configuration={
             "query": {
                 "query": CUSTOMER_RENTALS_QUERY,
@@ -65,5 +65,4 @@ with models.DAG(
                 "writeDisposition": "WRITE_TRUNCATE",
             }
         },
-        location="US",
     )

@@ -32,7 +32,10 @@ with models.DAG(
     )
 
     create_dataset = BigQueryCreateEmptyDatasetOperator(
-        task_id="create_dataset", dataset_id=DATASET_NAME)
+        task_id="create_dataset",
+        dataset_id=DATASET_NAME,
+        location="US"
+    )
 
     # example with autodetect schema
     bq_load_customer = GCSToBigQueryOperator(
