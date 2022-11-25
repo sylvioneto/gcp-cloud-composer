@@ -29,6 +29,28 @@ module "composer" {
     # add custom packages here 
   }
 
+  # Airflow components configuration
+  scheduler = {
+    "count" : 1,
+    "cpu" : 1,
+    "memory_gb" : 2,
+    "storage_gb" : 1
+  }
+
+  web_server = {
+    "cpu" : 1,
+    "memory_gb" : 2,
+    "storage_gb" : 1
+  }
+
+  worker = {
+    cpu        = 1
+    memory_gb  = 2
+    storage_gb = 1
+    min_count  = 1
+    max_count  = 4
+  }
+
   depends_on = [
     module.vpc
   ]
